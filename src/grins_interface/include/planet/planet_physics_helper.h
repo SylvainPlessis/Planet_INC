@@ -204,7 +204,7 @@ namespace Planet
       _ionic_reaction_set(NULL),
       _chapman(NULL),
       _tau(NULL),
-      _scaling_factor(1e13) // sensible default
+      _scaling_factor(1e13L) // sensible default
   {
     this->build(input);
 

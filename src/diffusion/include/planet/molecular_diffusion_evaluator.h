@@ -191,10 +191,11 @@ namespace Planet
         }
 //Dtilde = Ds numerator (ntot - n_s) / Ds denom ... 
 // cm2.s-1
-        Dtilde[s] = (nTot - molar_concentrations[s])
+        if(n_D > 0.)Dtilde[s] = (nTot - molar_concentrations[s])
                             / ( n_D * (CoeffType(1.L) - molar_concentrations[s]/nTot * 
                                       (CoeffType(1.L) - _mixture.neutral_composition().M(s) / meanM))
                               );
+      
        }
        return;
   }

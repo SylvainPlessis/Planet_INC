@@ -129,23 +129,32 @@ namespace Planet{
 // eddy diff
      CoeffType eddy_K = _eddy_diffusion.K(nTot);
 
-// in km-2.s-1
+// in cm-3.km.s-1
+//std::cout << "z = " << z << " T = " << T << " dT_dz = " << dT_dz << std::endl;
      for(unsigned int s = 0; s < _mixture.neutral_composition().n_species(); s++)
      {
             omegas[s] = Antioch::constant_clone(T,1e-10) * (//omega = - ns * Dtilde * [
             - molecular[s] * 
             (
                 dmolar_concentrations_dz[s] // 1/ns * dns_dz
-              + molar_concentrations[s]/Hs[s]  // + 1/Hs
-              + molar_concentrations[s] * dT_dz/T // + 1/T * dT_dz * (
-                * (Antioch::constant_clone(T,1.) + ((nTot - molar_concentrations[s])/nTot) * _mixture.thermal_coefficient()[s]) //1 + (1 - xs)*alphas ) ]
+//              + molar_concentrations[s]/Hs[s]  // + 1/Hs
+//              + molar_concentrations[s] * dT_dz/T // + 1/T * dT_dz * (
+//                * (Antioch::constant_clone(T,1.) + ((nTot - molar_concentrations[s])/nTot) * _mixture.thermal_coefficient()[s]) //1 + (1 - xs)*alphas ) ]
             )
              - eddy_K * // - ns * K * (
             ( 
                 dmolar_concentrations_dz[s] // 1/ns * dns_dz
-              + molar_concentrations[s]/Ha // + 1/Ha
-              + molar_concentrations[s] * dT_dz/T //+1/T * dT_dz )
+//              + molar_concentrations[s]/Ha // + 1/Ha
+//              + molar_concentrations[s] * dT_dz/T //+1/T * dT_dz )
             ));
+/*std::cout << "diffusion details for species " << _mixture.neutral_composition().species_inverse_name_map().at(_mixture.neutral_composition().species_list()[s]) 
+          << " mol diff = " << molecular[s] << std::endl;
+          << " dn_dz = " << dmolar_concentrations_dz[s] 
+          << " n/Hs = "   << molar_concentrations[s]/Hs[s] 
+          << " n/T dT_dz (1 + ((ntot-n)/ntot)*alpha) = " <<  molar_concentrations[s] * dT_dz/T
+                                * (Antioch::constant_clone(T,1.) + ((nTot - molar_concentrations[s])/nTot) * _mixture.thermal_coefficient()[s]) 
+          << " n/Ha = " <<  molar_concentrations[s]/Ha 
+          << " n dT_dz = " << molar_concentrations[s] * dT_dz/T << std::endl;*/
      }
      return;
   }

@@ -144,11 +144,11 @@ namespace Planet
    VectorStateType dmolar = Antioch::zero_clone(dmolar_concentrations_dz);
    for(unsigned int i = 0; i < molar_concentrations.size(); i++)
    {
-      molar[i]  = molar_concentrations[i]     * _scaling_factor;
+      if(molar_concentrations[i] > 0.)molar[i]  = molar_concentrations[i] * _scaling_factor;
       dmolar[i] = dmolar_concentrations_dz[i] * _scaling_factor;
    }
    _diffusion.diffusion(molar,dmolar,z,_omegas);
-   _kinetics.chemical_rate(molar,this->get_cache(z),z,_omegas_dots);
+//   _kinetics.chemical_rate(molar,this->get_cache(z),z,_omegas_dots);
 
 
    this->update_cache(molar,z);
@@ -225,7 +225,7 @@ namespace Planet
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
   libMesh::Real PlanetPhysicsEvaluator<CoeffType,VectorCoeffType,MatrixCoeffType>::chemical_term(unsigned int s) const
   {
-    return _omegas_dots[s] / _scaling_factor;
+    return Antioch::zero_clone(_scaling_factor);// _omegas_dots[s] / _scaling_factor;
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
