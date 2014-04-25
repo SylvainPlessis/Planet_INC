@@ -90,6 +90,8 @@ namespace Planet
 
     const VectorCoeffType& phy1AU() const;
 
+    const Antioch::ParticleFlux<VectorCoeffType> & phy_at_top() const;
+
     const std::vector<std::string>& medium() const;
 
     CoeffType K0() const;
@@ -116,7 +118,7 @@ namespace Planet
     Chapman<CoeffType>* _chapman;
 
     Antioch::ParticleFlux<VectorCoeffType> _phy1AU;
-    VectorCoeffType                        _phy_at_top;
+    Antioch::ParticleFlux<VectorCoeffType> _phy_at_top;
 
     std::vector<CrossSection<VectorCoeffType> > _hv_cross_section;
 
@@ -179,7 +181,9 @@ namespace Planet
     void read_cross_section( const std::string &file,
                             VectorCoeffType &lambda, VectorCoeffType &sigma ) const;
 
-    void read_hv_flux(Antioch::ParticleFlux<VectorCoeffType> & phy1AU, const std::string &file) const;
+    void read_hv_flux(Antioch::ParticleFlux<VectorCoeffType> & phy1AU, 
+                      Antioch::ParticleFlux<VectorCoeffType> & phy_at_top, 
+                      const std::string &file) const;
 
     void read_neutral_characteristics(const std::vector<std::string>& neutrals,
                                       VectorCoeffType& tc,VectorCoeffType& hard_sphere_radius,
@@ -451,7 +455,7 @@ namespace Planet
     std::string input_N2  = input("Planet/input_N2", "DIE!" );
     std::string input_CH4 = input("Planet/input_CH4", "DIE!" );
 
-    this->read_hv_flux(_phy1AU, input_hv);
+    this->read_hv_flux(_phy1AU, _phy_at_top, input_hv);
 
     this->read_cross_section(input_N2,  lambda_N2,  sigma_N2);
     this->read_cross_section(input_CH4, lambda_CH4, sigma_CH4);
@@ -463,7 +467,7 @@ namespace Planet
     _tau->add_cross_section( lambda_CH4, sigma_CH4, Antioch::Species::CH4,
                              _neutral_species->active_species_name_map().at("CH4") );
 
-    _tau->update_cross_section(_lambda_hv);
+    _tau->update_cross_section(_phy1AU.abscissa());
 
     return;
   }
@@ -837,7 +841,9 @@ namespace Planet
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
-  void PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::read_hv_flux(VectorCoeffType &lambda, Antioch::ParticleFlux<VectorCoeffType> &phy1AU, const std::string &file) const
+  void PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::read_hv_flux(Antioch::ParticleFlux<VectorCoeffType> &phy1AU, 
+                                                                                    Antioch::ParticleFlux<VectorCoeffType> &phy_at_top, 
+                                                                                    const std::string &file) const
   {
     std::string line;
     std::ifstream flux_1AU(file);
@@ -848,6 +854,7 @@ namespace Planet
       }
     getline(flux_1AU,line);
     VectorCoeffType lambda,flux;
+//TODO unit management !! use SwRI only
     while(!flux_1AU.eof())
       {
         CoeffType wv,ir,dirr;
@@ -860,7 +867,17 @@ namespace Planet
     flux_1AU.close();
     phy1AU.set_abscissa(lambda);
     phy1AU.set_flux(flux);
-    return;
+
+//TODO: generalize it with input file
+   CoeffType d = Constants::Saturn::d_Sun<CoeffType>();
+   for(unsigned int i = 0; i < lambda.size(); i++)
+   {
+      flux[i] /= (d * d);
+   }
+   phy_at_top.set_abscissa(lambda);
+   phy_at_top.set_flux(flux);
+
+   return;
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
@@ -1139,7 +1156,7 @@ namespace Planet
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
-  Antioch::ReactionSet<CoeffType>& PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::neutral_reaction_set()
+  const Antioch::ReactionSet<CoeffType>& PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::neutral_reaction_set() const
   {
     return *_neutral_reaction_set;
   }
@@ -1151,7 +1168,7 @@ namespace Planet
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
-  PhotonOpacity<CoeffType,VectorCoeffType>& PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::tau()
+  const PhotonOpacity<CoeffType,VectorCoeffType>& PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::tau() const
   {
     return *_tau;
   }
@@ -1178,6 +1195,12 @@ namespace Planet
   const VectorCoeffType& PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::phy1AU() const
   {
     return _phy1AU.flux();
+  }
+
+  template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
+  const Antioch::ParticleFlux<VectorCoeffType> & PlanetPhysicsHelper<CoeffType,VectorCoeffType,MatrixCoeffType>::phy_at_top() const
+  {
+    return _phy_at_top;
   }
 
   template<typename CoeffType, typename VectorCoeffType, typename MatrixCoeffType>
